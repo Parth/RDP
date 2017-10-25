@@ -18,40 +18,39 @@ class socket:
     def bind(self,address):
         return 
 
-    def connect(self,address):  # fill in your code here 
     #bind
     #Create SYN Header
     # start timer
     #recv SYN ACK B
     #send ACK C
     #if there is error send header again
-        return 
+    def connect(self,address):  # fill in your code here 
+		pass
     
     def listen(self,backlog):
-    pass
-        return
+		pass
 
+	#recv Syn A
+	#send SYN ACK B
+	# ACK C
     def accept(self):
-    #recv Syn A
-    #send SYN ACK B
-    # ACK C
         (clientsocket, address) = (1,1)  # change this to your code 
         return (clientsocket,address)
     
     def close(self):   # fill in your code here 
-        return 
+		pass
 
-    def send(self,buffer):
     #create header
     #send data
     #start timer
     #if timeout, send same packet again
     #
+    def send(self,buffer):
         bytessent = 0     # fill in your code here 
         return bytesent 
 
+	#recv packet
+	#send right ACK
     def recv(self,nbytes):
-    #recv packet
-    #send right ACK
         bytesreceived = 0     # fill in your code here
         return bytesreceived 
