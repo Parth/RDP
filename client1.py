@@ -95,7 +95,7 @@ def main():
     lapsed_seconds = end_stamp - start_stamp
     
     # this part send the lenght of the digest, then the
-    # digest. It will be check on the server 
+    # digest. It will be checked on the server 
     
     digest = mdhash.digest()
     # send the length of the digest
