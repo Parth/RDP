@@ -2,6 +2,8 @@ import binascii
 import socket as syssocket
 import struct
 import sys
+import datetime import datetime
+import random import randint
 
 txPort = None
 rxPort = None
@@ -13,9 +15,13 @@ def init(UDPportTx,UDPportRx):
 	rxPort = UDPportRx
 	
 class socket:
-	def __init__(self): 
+
+	def __init__(self, peer_address=None): 
 		self.ourSocket = syssocket.socket(syssocket.AF_INET, syssocket.SOCK_DGRAM)
-		# TODO is there any reason a socket can't be created?
+
+		if peer_address is not None: 
+			self.peer_address = peer_address
+			self.connected = True
 	
 	def bind(self, address):
 		self.ourSocket.bind(address)
@@ -25,13 +31,29 @@ class socket:
 		header_struct = struct.Struct(HEADER_STRUCT)
 		return header_struct.pack(version, flags, opt_ptr, protocol, HEADER_SIZE, checksum, source_port, dest_port, sequence_no, ack_no, window, payload_len)
 
+	def send_syn(self, address):
+		syn = self.get_packet_header(1, 1, 0, 0, 0, 0, 0, 0, randint(0, 2**32), 0, 0)
+		self.ourSocket.sendto(syn, address)
+
 	def connect(self, address):  # fill in your code here 
-		syn_header = self.get_packet_header(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-		self.ourSocket.sendto(syn_header, address)
-		# start timer
-		#recv SYN ACK B
-		#send ACK C
-		#if there is error send header again
+		self.peer_address = address
+
+		startTime = datetime.now()
+		timeElapsed = datetime.now() - startTime
+
+		final_ack = None
+		while final_ack is None: 
+			send_syn(address)
+			while timeElapsed.microseconds < 200000:
+				timeElapsed = datetime.now() - timeElapsed
+				(data, address) = self.ourSocket.recvfrom(HEADER_SIZE)
+				syn_ack = struct.unpack(HEADER_STRUCT, data)
+
+				if syn_ack[1] is 5:
+					final_ack = self.get_packet_header(1, 4, 0, 0, 0, 0, 0, unpacked[9]+1, 1, 0, 0)
+
+		self.ourSocket.sendto(final_ack, address)
+		self.connected = True
 	
 	def listen(self, backlog):
 		pass
@@ -41,17 +63,21 @@ class socket:
 	# ACK C
 	def accept(self):
 		header = None
-		while header is None: 
-			data = self.ourSocket.recvfrom(HEADER_SIZE) 
-			while data is not HEADER_SIZE:
-				data = self.ourSocket.recvfrom(HEADER_SIZE) 
-
+		address = None
+		while header is None:
+			(data, address) = self.ourSocket.recvfrom(HEADER_SIZE)
 			unpacked = struct.unpack(HEADER_STRUCT, data)
 
 			if unpacked[1] is 1:
-				header = self.get_packet_header(1, 5, 0, 0, 0, 0, 0, 1, 1, 0, 0)
+				sequence_number = randint(0, 2**32)
+				header = self.get_packet_header(1, 5, 0, 0, 0, 0, 0, sequence_number, unpacked[8]+1, 0, 0)
 
+		self.ourSocket.sendto(header, address)
 
+		clientsocket = None
+		while clientsocket is None:
+			self.ourSocket.recvfrom(HEADER_SIZE)
+			
 		(clientsocket, address) = (1,1)  # change this to your code 
 		return (clientsocket,address)
 	
