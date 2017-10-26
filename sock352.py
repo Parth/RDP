@@ -27,8 +27,7 @@ class socket:
 
 	def connect(self, address):  # fill in your code here 
 		syn_header = self.get_packet_header(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-		while True:
-			self.ourSocket.sendto(syn_header, address)
+		self.ourSocket.sendto(syn_header, address)
 		# start timer
 		#recv SYN ACK B
 		#send ACK C
@@ -41,8 +40,18 @@ class socket:
 	#send SYN ACK B
 	# ACK C
 	def accept(self):
-		while True:
-			print(struct.unpack(HEADER_STRUCT, self.ourSocket.recv(HEADER_SIZE)))
+		header = None
+		while header is None: 
+			data = self.ourSocket.recvfrom(HEADER_SIZE) 
+			while data is not HEADER_SIZE:
+				data = self.ourSocket.recvfrom(HEADER_SIZE) 
+
+			unpacked = struct.unpack(HEADER_STRUCT, data)
+
+			if unpacked[1] is 1:
+				header = self.get_packet_header(1, 5, 0, 0, 0, 0, 0, 1, 1, 0, 0)
+
+
 		(clientsocket, address) = (1,1)  # change this to your code 
 		return (clientsocket,address)
 	
