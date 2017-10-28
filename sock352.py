@@ -36,24 +36,27 @@ class socket:
 		self.ourSocket.sendto(syn, address)
 
 	def connect(self, address):  # fill in your code here 
-		self.peer_address = address
+		if not self.connected:
+			self.peer_address = address
 
-		startTime = datetime.now()
-		timeElapsed = datetime.now() - startTime
+			startTime = datetime.now()
+			timeElapsed = datetime.now() - startTime
 
-		final_ack = None
-		while final_ack is None: 
-			send_syn(address)
-			while timeElapsed.microseconds < 200000:
-				timeElapsed = datetime.now() - timeElapsed
-				(data, address) = self.ourSocket.recvfrom(HEADER_SIZE)
-				syn_ack = struct.unpack(HEADER_STRUCT, data)
+			final_ack = None
+			while final_ack is None: 
+				send_syn(address)
+				while timeElapsed.microseconds < 200000:
+					timeElapsed = datetime.now() - timeElapsed
+					(data, address) = self.ourSocket.recvfrom(HEADER_SIZE)
+					syn_ack = struct.unpack(HEADER_STRUCT, data)
 
-				if syn_ack[1] is 5:
-					final_ack = self.get_packet_header(1, 4, 0, 0, 0, 0, 0, unpacked[9]+1, 1, 0, 0)
+					if syn_ack[1] is 5:
+						final_ack = self.get_packet_header(1, 4, 0, 0, 0, 0, 0, unpacked[9]+1, 1, 0, 0)
 
-		self.ourSocket.sendto(final_ack, address)
-		self.connected = True
+			self.ourSocket.sendto(final_ack, address)
+			self.connected = True
+		else:
+			print("error, socket already connected")
 	
 	def listen(self, backlog):
 		pass
@@ -76,9 +79,14 @@ class socket:
 
 		clientsocket = None
 		while clientsocket is None:
-			self.ourSocket.recvfrom(HEADER_SIZE)
+			(data, address2) = self.ourSocket.recvfrom(HEADER_SIZE)
+
+			if address2 == address:
+				unpacked = struct.unpack(HEADER_STRUCT, data)
+
+				if unpacked[1] is 4:
+					clientsocket = self.socket(address=address)
 			
-		(clientsocket, address) = (1,1)  # change this to your code 
 		return (clientsocket,address)
 	
 	def close(self):   # fill in your code here 
