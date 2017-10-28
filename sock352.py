@@ -29,7 +29,6 @@ class socket:
 	
 	def bind(self, address):
 		self.ourSocket.bind(address)
-		# TODO Does this need to return anything?
 	
 	def get_packet_header(self, version, flags, opt_ptr, protocol, checksum, source_port, dest_port, sequence_no, ack_no, window, payload_len):
 		header_struct = struct.Struct(HEADER_STRUCT)
@@ -100,7 +99,7 @@ class socket:
 					print("connection established")
 					clientsocket = socket(peer_address=address)
 			
-		return (clientsocket,address)
+		return (clientsocket, address)
 	
 	def close(self):   # fill in your code here 
 		pass
@@ -111,9 +110,14 @@ class socket:
 	#if timeout, send same packet again
 	#
 	def send(self, buffer):
+		#len(buffer)
+		#buffer[3]
+		#self.ourSocket.sendTo(data, self.peer_address)
 		return bytesent 
 
 	#recv packet
 	#send right ACK
 	def recv(self, nbytes):
+		#(data, address) = self.recvFrom(SIZE)
+		#if (address == self.peer_address):
 		return bytesreceived 
