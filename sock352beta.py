@@ -217,7 +217,7 @@ class socket:
                 
                 		if (rec_packet_header.flags > 0):
                     			print "Not data packet"
-                    			if (rec_packet_header.flags == FIN_VAL)
+                    			if (rec_packet_header.flags == FIN_VAL):
 						global_socket.close()
                         			break;
 
