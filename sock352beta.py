@@ -81,13 +81,13 @@ class socket:
 		#checks flag to verify that it is indeed a SYN flag OR checks ack number to verify it is the sequence number +1 as denoted in class
 		if (rec_packet.flags != 5 or rec_packet.ack_no != (syn.header.sequence_no + 1)):
 			print "Bad SYN"
-        else:
-        	#proper SYN, connect set to true, seq numbers set to proper values
-        	self.connected= True
-        	self.next_seq = rec_packet.ack_no
-        	self.prev_ack = rec_packet.ack_no - 1
-        	print "Connected"
-        return
+        	else:
+        		#proper SYN, connect set to true, seq numbers set to proper values
+        		self.connected= True
+        		self.next_seq = rec_packet.ack_no
+        		self.prev_ack = rec_packet.ack_no - 1
+        		print "Connected"
+        	return
 
     #n/a for part 1
     def listen (self, backlog):
