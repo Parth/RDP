@@ -209,9 +209,9 @@ class socket:
       		#standard code of timeout and receive from functions
         	while True:
             		try:
-                	global_socket.settimeout(.2)
-                	rPack, sender = global_socket.recvfrom(5000)
-                	rec_packet_header = packetHeader(rPack[:40])
+                		global_socket.settimeout(.2)
+                		rPack, sender = global_socket.recvfrom(5000)
+                		rec_packet_header = packetHeader(rPack[:40])
                 
                 		if (rec_packet_header.flags > 0):
                     			print "Not data packet"
