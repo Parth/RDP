@@ -189,7 +189,9 @@ class socket:
                 	if (rec_packet.flags != ACK_VAL or rec_packet.ack_no != (data_packet.header.sequence_no + 1)):
                     		print "Wrong ACK"
                     		#go back n protocol implemented here
-                		break
+				break
+                	else:
+				continue
 
             	except syssock.timeout:
                 	print "Socket Timed Out.."
