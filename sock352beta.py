@@ -1,5 +1,3 @@
-
-
 import socket as syssock
 import binascii
 import struct
@@ -235,7 +233,3 @@ class socket:
         global_socket.sendto(packed_ack, sender)
 
         return payload
-
-
-
-
