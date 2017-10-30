@@ -7,7 +7,103 @@ import time
 from Queue import *
 from random import *
 import math
-import packets.py
+
+#set struct format and size
+HEADER_STRUCT = "!BBBBHHLLQQLL"
+HEADER_SIZE = struct.calcsize(HEADER_STRUCT)
+
+#set header flags
+SYN_VAL = 0x1
+FIN_VAL = 0x2
+ACK_VAL = 0x4
+RESET_VAL = 0x8
+OPTION_VAL = 0xA0
+
+#set packet size
+packet_size=5000
+
+
+#header object for referencing
+class packHeader:
+    def __init__(self, theHeader=None):
+        self.header_struct = struct.Struct(HEADER_STRUCT)
+
+        #constructor for header fields
+        if (theHeader is None):
+            self.flags = 0
+            self.version = 1
+            self.opt_ptr = 0
+            self.protocol = 0
+            self.checksum = 0
+            self.sequence_no = 0
+            self.source_port = 0
+            self.ack_no = 0
+            self.dest_port = 0
+            self.window = 0
+            self.payload_len = 0
+        else:
+            #unpack header for receive function
+            self.unpackHeader(theHeader)
+
+    #Returns a packed header object
+    def getPacketHeader(self):
+        return self.header_struct.pack(self.version, self.flags, self.opt_ptr, self.protocol, struct.calcsize(HEADER_STRUCT), self.checksum, self.source_port, self.dest_port, self.sequence_no, self.ack_no, self.window, self.payload_len)
+
+    #Returns an unpacked header
+    def unpackHeader(self, theHeader):
+        if len(theHeader) < 40:
+            print ("Invalid Header")
+            return -1
+
+        header_array = self.header_struct.unpack(theHeader)
+        self.version = header_array[0]
+        self.flags = header_array[1]
+        self.opt_ptr = header_array[2]
+        self.protocol = header_array[3]
+        self.header_len = header_array[4]
+        self.checksum = header_array[5]
+        self.source_port = header_array[6]
+        self.dest_port = header_array[7]
+        self.sequence_no = header_array[8]
+        self.ack_no = header_array[9]
+        self.window = header_array[10]
+        self.payload_len = header_array[11]
+        return header_array 
+
+#packet object
+class new_packet:
+    def __init__(self, header=None, payload=None):
+        #constructor for packet fields, differs from header by adding payload
+        if header is None:
+            self.header = packHeader()
+        else:
+            self.header = header
+        if payload is None:
+            self.payload = None
+        else:
+            self.payload = payload
+            self.header.payload_len = len(self.payload)
+        pass
+    #Packs the packetheader and payload and combines them into one packet object
+    def packPacket(self):
+        packed_header = self.header.getPacketHeader()
+
+        if (self.payload is None):
+            packed_packet = packed_header
+        else:
+            packed_packet = packed_header + self.payload
+
+        return packed_packet
+
+    #Creates an ack packet
+    def create_ack(self, rHeader):
+        self.header.ack_no = rHeader.sequence_no + rHeader.payload_len
+        self.header.sequence_no = rHeader.ack_no + 1;
+        self.header.flags = ACK_VAL;
+    #Creates a SYN packet
+    def create_syn(self, seq_num):
+        self.header.flags = SYN_VAL
+        self.header.sequence_no = seq_num
 
 def init(UDPportTx, UDPportRx):  # initialize your UDP socket here
 
@@ -34,10 +130,12 @@ class socket:
 		return
 	#n/a for this part of the project
 	def bind (self, address):
-		pass
+		print "Binding..."
+		global_socket.bind(address)
+		return
 	#creates a syn packet to be sent to initialize a connection
 	def connect (self, address):
-
+		print "In Connect"
 		#sets sequence and ack numbers to be referenced in the new syn packet
 		self.init_seq=randint(0, 2**64)
 		self.ack_no=0
@@ -56,7 +154,7 @@ class socket:
 
 			#sends syn packet through global socket to address provided
 			global_socket.sendto(packsyn, address)
-
+			print "Sending to", address
 			try:
 				#sets timeout of .2 seconds, keep trying to send packet during this timeout
 
@@ -69,14 +167,14 @@ class socket:
 			#fails if timeout exception
 			except syssock.timeout:
 				print "Socket timeout..."
-				time.sleep(5)
+				#time.sleep(5)
 			finally:
 
 				print "Syn Packet sent successfully"
 				#resets timer
 				global_socket.settimeout(None)
 		#retrieves packet header of 'syn' packet, packet header is the first 40 bytes of the packet as denoted by [:40]
-		rec_packet=getpacketHeader(rpacket[:40])
+		rec_packet=getPacketHeader(rpacket[:40])
 
 		#checks flag to verify that it is indeed a SYN flag OR checks ack number to verify it is the sequence number +1 as denoted in class
 		if (rec_packet.flags != 5 or rec_packet.ack_no != (syn.header.sequence_no + 1)):
@@ -102,8 +200,12 @@ class socket:
     				#sets timeout for receiving
     				global_socket.settimeout(.2)
     				(rpacket, sender)=global_socket.recvfrom(packet_size)
-    				rec_packet=getpacketHeader(rec_packet[:40])
-				print "Server accepting..."
+    				rec_packet=packHeader(rpacket[:40])
+				print "Server accepting from...", sender
+				if (rec_packet.flags != SYN_VAL):
+					print "Non connection flag"
+				else:
+					break
     			except syssock.timeout:
     				print "Socket timed out"
 				time.sleep(5)
@@ -186,16 +288,16 @@ class socket:
                 	(raw_packet, sender) = global_socket.recvfrom(header_len)
                 	rec_packet = packetHeader(raw_packet)
 			print "Packet received..."
-                	if (rec_packet.flags != ACK_VAL or rec_packet.ack_no != (data_packet.header.sequence_no + 1)):
-                    		print "Wrong ACK"
+                	if (rec_packet.flags != ACK_VAL or rec_packet.ack_no != (data.header.sequence_no + 1)):
+                    		print "Wrong ACK, Going Back N"
                     		#go back n protocol implemented here
-				break
+				'''break
                 	else:
-				continue
+				continue'''
 
             	except syssock.timeout:
                 	print "Socket Timed Out.."
-                	continue
+                	#continue
 
             	finally:
                 	global_socket.settimeout(None)
@@ -213,7 +315,7 @@ class socket:
             		try:
                 		global_socket.settimeout(.2)
                 		rPack, sender = global_socket.recvfrom(5000)
-                		rec_packet_header = packetHeader(rPack[:40])
+                		rec_packet_header = packHeader(rPack[:40])
                 
                 		if (rec_packet_header.flags > 0):
                     			print "Not data packet"
