@@ -1,3 +1,5 @@
+
+
 import socket as syssock
 import binascii
 import struct
@@ -14,7 +16,7 @@ def init(UDPportTx, UDPportRx):  # initialize your UDP socket here
    	#init global socket for sending and receiving
     global global_socket
     global_socket = syssock.socket(syssock.AF_INET, syssock.SOCK_DGRAM)
-
+    print "Global socket created"
 
     if UDPportTx < 1 or UDPportTx > 65535:
         UDPportTx = 27182
@@ -41,7 +43,7 @@ class socket:
 		#sets sequence and ack numbers to be referenced in the new syn packet
 		self.init_seq=randint(0, 2**64)
 		self.ack_no=0
-
+		print "creating SYN Packet"
 		#creates a new packet
 		syn=new_packet()
 
@@ -50,7 +52,7 @@ class socket:
 
 		#packages the syn packet
 		packsyn=syn.packPacket()
-
+		print "Sending SYN Packet"
 		#send out the syn packet to setup connection
 		while True:
 
@@ -66,25 +68,25 @@ class socket:
 				#returns packet size in rpacket
 				(rpacket, sender)=global_socket.recvfrom(packet_size)
 			#fails if timeout exception
-			except syssock.timeout
+			except syssock.timeout:
+				time.sleep(5)
 			finally:
 
+				print "Syn Packet sent successfully"
 				#resets timer
 				global_socket.settimeout(None)
 		#retrieves packet header of 'syn' packet, packet header is the first 40 bytes of the packet as denoted by [:40]
 		rec_packet=getpacketHeader(rpacket[:40])
 
 		#checks flag to verify that it is indeed a SYN flag OR checks ack number to verify it is the sequence number +1 as denoted in class
-		if (rec_packet.flags != 5 or
-                    rec_packet.ack_no != (syn.header.sequence_no + 1)):
-            print "Bad SYN"
+		if (rec_packet.flags != 5 or rec_packet.ack_no != (syn.header.sequence_no + 1)):
+			print "Bad SYN"
         else:
-
         	#proper SYN, connect set to true, seq numbers set to proper values
-            self.connected= True
-            self.next_seq = rec_packet.ack_no
-            self.prev_ack = rec_packet.ack_no - 1
-            print "Connected"
+        	self.connected= True
+        	self.next_seq = rec_packet.ack_no
+        	self.prev_ack = rec_packet.ack_no - 1
+        	print "Connected"
         return
 
     #n/a for part 1
@@ -101,7 +103,7 @@ class socket:
     			global_socket.settimeout(.2)
     			(rpacket, sender)=global_socket.recvfrom(packet_size)
     			rec_packet=getpacketHeader(rec_packet[:40])
-    		except syssock.timeout
+    		except syssock.timeout:
     			print "Socket timed out"
     		finally:
     			global_socket.settimeout(None)
@@ -173,10 +175,9 @@ class socket:
                 (raw_packet, sender) = global_socket.recvfrom(header_len)
                 rec_packet = packetHeader(raw_packet)
                
-                if (rec_packet.flags != ACK_VAL or
-                            rec_packet.ack_no != (
-                            data_packet.header.sequence_no + 1)):
+                if (rec_packet.flags != ACK_VAL or rec_packet.ack_no != (data_packet.header.sequence_no + 1)):
                     print "Wrong ACK"
+                    #go back n protocol implemented here
                 break
 
             except syssock.timeout:
@@ -234,6 +235,7 @@ class socket:
         global_socket.sendto(packed_ack, sender)
 
         return payload
+
 
 
 
