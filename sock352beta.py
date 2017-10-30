@@ -65,8 +65,10 @@ class socket:
 
 				#returns packet size in rpacket
 				(rpacket, sender)=global_socket.recvfrom(packet_size)
+				print "Received SYN Packet"
 			#fails if timeout exception
 			except syssock.timeout:
+				print "Socket timeout..."
 				time.sleep(5)
 			finally:
 
@@ -101,17 +103,21 @@ class socket:
     				global_socket.settimeout(.2)
     				(rpacket, sender)=global_socket.recvfrom(packet_size)
     				rec_packet=getpacketHeader(rec_packet[:40])
+				print "Server accepting..."
     			except syssock.timeout:
     				print "Socket timed out"
+				time.sleep(5)
+				continue
     			finally:
     				global_socket.settimeout(None)
-
+		print "Server accepted connection"
     		#initial sequence number should be random between this range 0-2^64
     		self.init_seq=randint(0, 2**64)
     		#prev ack should be sequence number -1
     		self.prev_ack=rec_packet.sequence_no-1
     		#creates new packet of type ACK
     		ack=new_packet()
+		print "Creating ACK Packet"
     		#sets flags of ACK pack, ACKING a SYN packet
     		ack.header.flags=ACK_VAL+SYN_VAL
     		ack.header.sequence_no=self.init_seq
@@ -122,10 +128,13 @@ class socket:
     		packed_ack=ack.packPacket()
 
     		#returns the number of bytes sent
+		print "Sending ACK Packet back to client"
     		bytessent=global_socket.sendto(packed_ack, sender)
 
     		#sets new socket
+		print "Creating new socket"
     		clientsocket=self
+		print "New socket created"
     		#returns new socket with address
     		return(clientsocket, sender)
 
@@ -138,6 +147,7 @@ class socket:
         	FIN.header.flags = FIN_VAL
         	packed_FIN = FIN.packPacket()
         	global_socket.send(packed_FIN)
+		print "Closing socket"
         	self.connected = False
         	self.prev_ack = 0
         	self.next_seq = 0
@@ -151,10 +161,12 @@ class socket:
         	#assigns the data in buffer up until the 5000th byte to payload
         	payload = buffer[:4098]
         	#creates new packet of type payload
+		print "Creating payload packet"
         	data = new_packet()
         	#assigns payload length
         	data.header.payload_len = len(payload)
         	#sets sequence and ack numbers
+		print "Setting ACK numbers of payload packet"
         	data.header.sequence_no = self.next_seq
         	data.header.ack_no = self.next_ack
 
@@ -162,8 +174,9 @@ class socket:
         	data.payload = payload
 
         	#packages the data packet
+		print "Packaging payload packet"
         	packed_data = data.packPacket()
-
+		print "Sending payload packet"
         	while True:
             
             		bytesSent = global_socket.send(packed_data)
@@ -172,7 +185,7 @@ class socket:
                 	global_socket.settimeout(.2)
                 	(raw_packet, sender) = global_socket.recvfrom(header_len)
                 	rec_packet = packetHeader(raw_packet)
-               
+			print "Packet received..."
                 	if (rec_packet.flags != ACK_VAL or rec_packet.ack_no != (data_packet.header.sequence_no + 1)):
                     		print "Wrong ACK"
                     	#go back n protocol implemented here
