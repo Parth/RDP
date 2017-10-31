@@ -311,10 +311,7 @@ class socket:
                     		print "Wrong ACK, Going Back N"
                     		#go back n protocol implemented here
 
-				'''break
-                	else:
-				continue'''
-
+			break
             	except syssock.timeout:
                 	print "Socket Timed Out.."
                 	#continue
